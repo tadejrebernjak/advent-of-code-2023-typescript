@@ -13,6 +13,7 @@
   "author": "Tadej",
   "license": "ISC",
   "devDependencies": {
-    "@types/node": "^20.10.2"
+    "@types/node": "^20.10.2",
+    "typescript": "^5.3.2"
   }
 }
