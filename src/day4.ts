@@ -67,8 +67,7 @@ function parseCard(line: string): Card {
 
   // Parse winning numbers
   const winningNumbersString: string = numbersString
-    .split("|")[0]
-    .trimEnd()
+    .split(" | ")[0]
     .substring(1);
   const winningNumbers: number[] = [];
   for (let i = 0; i < winningNumbersString.length; i += 3) {
@@ -76,7 +75,7 @@ function parseCard(line: string): Card {
   }
 
   // Parse drawn numbers
-  const drawnNumbersString: string = numbersString.split("|")[1].substring(1);
+  const drawnNumbersString: string = numbersString.split(" | ")[1];
   const drawnNumbers: number[] = [];
   for (let i = 0; i < drawnNumbersString.length; i += 3) {
     drawnNumbers.push(parseInt(drawnNumbersString.substring(i, i + 2)));
