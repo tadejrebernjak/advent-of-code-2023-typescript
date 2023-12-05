@@ -32,11 +32,11 @@ class Seed {
     maps.forEach((map) => {
       for (const entry of map.entries) {
         if (
-          this[map.source] >= entry.sourceStart &&
-          this[map.source] < entry.sourceStart + entry.length
+          this[map.source] >= entry.source.start &&
+          this[map.source] < entry.source.end
         ) {
           this[map.destination] =
-            entry.destinationStart + (this[map.source] - entry.sourceStart);
+            entry.destinationStart + (this[map.source] - entry.source.start);
           break;
         }
       }
@@ -53,16 +53,14 @@ type Map = {
   entries: MapEntry[];
 };
 
-type MapEntry = {
-  destinationStart: number;
-  sourceStart: number;
-  sourceEnd: number;
-  length: number;
-};
-
 type Range = {
   start: number;
   end: number;
+};
+
+type MapEntry = {
+  destinationStart: number;
+  source: Range;
 };
 
 let seedsStrings: string[] = null;
@@ -94,26 +92,28 @@ rl.on("line", (line: string) => {
   const sourceEnd = sourceStart + length - 1;
   const destinationStart = parseInt(split[0]);
 
-  currentMap.entries.push({ destinationStart, sourceStart, sourceEnd, length });
+  currentMap.entries.push({
+    destinationStart,
+    source: { start: sourceStart, end: sourceEnd },
+  });
 });
 
 rl.on("close", () => {
-  let answer: number = Number.MAX_SAFE_INTEGER;
+  let answer1: number = Number.MAX_SAFE_INTEGER;
+  let answer2: number = Number.MAX_SAFE_INTEGER;
 
-  // PART ONE
+  // Part 1
   for (const seedString of seedsStrings) {
     const seed: Seed = new Seed(parseInt(seedString));
     seed.process(maps);
-    if (seed.location < answer) answer = seed.location;
+    if (seed.location < answer1) answer1 = seed.location;
   }
-  console.log("Answer 1: " + answer);
 
-  // PART TWO
+  // Part 2
   maps.forEach((map) =>
-    map.entries.sort((a, b) => a.sourceStart - b.sourceStart)
+    map.entries.sort((a, b) => a.source.start - b.source.start)
   );
 
-  answer = Number.MAX_SAFE_INTEGER;
   const ranges: Range[] = [];
   for (let i = 0; i < seedsStrings.length; i += 2) {
     ranges.push({
@@ -122,12 +122,14 @@ rl.on("close", () => {
     });
   }
 
-  for (const i in ranges) {
-    const lowestLocation = processRange(0, ranges[i]);
-    if (lowestLocation < answer) answer = lowestLocation;
+  for (const range of ranges) {
+    const lowestLocation = processRange(0, range);
+    if (lowestLocation < answer2) answer2 = lowestLocation;
   }
 
-  console.log("Answer 2: " + answer);
+  // Finish
+  console.log("Answer 1: " + answer1);
+  console.log("Answer 2: " + answer2);
 });
 
 function processRange(mapIndex: number, range: Range): number {
@@ -153,23 +155,31 @@ function splitRange(originalRange: Range, originalMap: Map): Range[] {
 
   map.entries = map.entries.filter(
     (entry) =>
-      (entry.sourceStart >= range.start && entry.sourceStart <= range.end) ||
-      (entry.sourceEnd >= range.start && entry.sourceEnd <= range.end) ||
-      (entry.sourceStart <= range.start && entry.sourceEnd >= range.end)
+      (entry.source.start >= range.start && entry.source.start <= range.end) ||
+      (entry.source.end >= range.start && entry.source.end <= range.end) ||
+      (entry.source.start <= range.start && entry.source.end >= range.end)
   );
 
   const ranges: Range[] = [];
   while (range.start <= range.end) {
-    if (map.entries.length === 0 || range.end < map.entries[0].sourceEnd) {
+    const nextMapEntry: MapEntry = map.entries[0];
+
+    if (nextMapEntry === undefined) {
+      // rangeStart rangeEnd
       ranges.push({ start: range.start, end: range.end });
       break;
-    } else if (range.end === map.entries[0].sourceEnd) {
-      ranges.push({ start: range.start, end: range.end - 1 });
-      ranges.push({ start: range.end, end: range.end });
+    } else if (nextMapEntry.source.start > range.start) {
+      // rangeStart | mapStart ...
+      ranges.push({ start: range.start, end: nextMapEntry.source.start - 1 });
+      range.start = nextMapEntry.source.start;
+    } else if (range.end < nextMapEntry.source.end) {
+      // mapStart | rangeStart rangeEnd | mapEnd
+      ranges.push({ start: range.start, end: range.end });
       break;
     } else {
-      ranges.push({ start: range.start, end: map.entries[0].sourceEnd });
-      range.start = map.entries[0].sourceEnd + 1;
+      // mapStart | rangeStart | mapEnd | rangeEnd
+      ranges.push({ start: range.start, end: nextMapEntry.source.end });
+      range.start = nextMapEntry.source.end + 1;
       map.entries.shift();
     }
   }
@@ -180,12 +190,10 @@ function mapRanges(ranges: Range[], map: Map): void {
   ranges.forEach((range) => {
     const mapEntry: MapEntry = map.entries.filter(
       (entry) =>
-        (entry.sourceStart >= range.start && entry.sourceStart <= range.end) ||
-        (entry.sourceEnd >= range.start && entry.sourceEnd <= range.end) ||
-        (entry.sourceStart <= range.start && entry.sourceEnd >= range.end)
+        entry.source.start <= range.start && entry.source.end >= range.end
     )[0];
     if (mapEntry != undefined && mapEntry != null) {
-      const shift = mapEntry.destinationStart - mapEntry.sourceStart;
+      const shift = mapEntry.destinationStart - mapEntry.source.start;
       range.start += shift;
       range.end += shift;
     }
