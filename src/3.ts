@@ -1,35 +1,8 @@
-import fs from "fs";
-import readline from "readline";
-
-const fileStream = fs.createReadStream("src/inputs/day3.txt");
-
-const rl = readline.createInterface({
-  input: fileStream,
-  crlfDelay: Infinity,
-});
-
-const engine: string[][] = [];
-
-rl.on("line", (line: string) => {
-  engine.push(line.split(""));
-});
-
-rl.on("close", () => {
-  const answer: Answer = processEngine(engine);
-  console.log("Answer 1: " + answer.partNumbers);
-  console.log("Answer 2: " + answer.gearRatios);
-});
-
 type NumberEntry = {
   value: number;
   line: number;
   start: number;
   end: number;
-};
-
-type Answer = {
-  partNumbers: number;
-  gearRatios: number;
 };
 
 type Gear = {
@@ -42,24 +15,6 @@ type Position = {
   line: number;
   index: number;
 };
-
-function processEngine(engine: string[][]): Answer {
-  const numbers: NumberEntry[] = getNumbers(engine);
-
-  let partNumbers: number = 0;
-  for (let i = numbers.length - 1; i >= 0; i--) {
-    if (isPartNumber(numbers[i], engine)) partNumbers += numbers[i].value;
-    else numbers.splice(i, 1);
-  }
-
-  let gearRatios: number = 0;
-  const gears: Gear[] = getGears(engine, numbers);
-  for (const gear of gears) {
-    gearRatios += gear.ratio;
-  }
-
-  return { partNumbers, gearRatios };
-}
 
 function getNumbers(engine: string[][]): NumberEntry[] {
   const numbers: NumberEntry[] = [];
@@ -216,3 +171,31 @@ function isDigit(char: string): boolean {
 function isSymbol(char: string): boolean {
   return !isDigit(char) && char != ".";
 }
+
+function main(input: string[]) {
+  let answer1: number = 0;
+  let answer2: number = 0;
+
+  const engine: string[][] = [];
+  input.forEach((line) => {
+    engine.push(line.split(""));
+  });
+  const numbers: NumberEntry[] = getNumbers(engine);
+
+  // Part 1
+  for (let i = numbers.length - 1; i >= 0; i--) {
+    if (isPartNumber(numbers[i], engine)) answer1 += numbers[i].value;
+    else numbers.splice(i, 1);
+  }
+
+  // Part 2
+  const gears: Gear[] = getGears(engine, numbers);
+  for (const gear of gears) {
+    answer2 += gear.ratio;
+  }
+
+  // Finish
+  return { part1: answer1, part2: answer2 };
+}
+
+export default main;

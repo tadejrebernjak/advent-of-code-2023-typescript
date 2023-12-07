@@ -1,12 +1,3 @@
-import fs from "fs";
-import readline from "readline";
-
-const fileStream = fs.createReadStream("src/inputs/day5.txt");
-const rl = readline.createInterface({
-  input: fileStream,
-  crlfDelay: Infinity,
-});
-
 class Seed {
   seed: number;
   soil: number;
@@ -63,76 +54,7 @@ type MapEntry = {
   source: Range;
 };
 
-let seedsStrings: string[] = null;
-const maps: Map[] = [];
-let currentMap: Map = null;
-
-rl.on("line", (line: string) => {
-  if (line === "") return;
-
-  if (line.split(": ")[0] === "seeds") {
-    if (seedsStrings === null) seedsStrings = line.split(": ")[1].split(" ");
-    return;
-  }
-
-  if (line.split(" ")[1] === "map:") {
-    const categories = line.split(" ")[0];
-    const source = categories.split("-")[0];
-    const destination = categories.split("-")[2];
-
-    maps.push({ source, destination, entries: [] });
-    currentMap = maps[maps.length - 1];
-
-    return;
-  }
-
-  const split = line.split(" ");
-  const length = parseInt(split[2]);
-  const sourceStart = parseInt(split[1]);
-  const sourceEnd = sourceStart + length - 1;
-  const destinationStart = parseInt(split[0]);
-
-  currentMap.entries.push({
-    destinationStart,
-    source: { start: sourceStart, end: sourceEnd },
-  });
-});
-
-rl.on("close", () => {
-  let answer1: number = Number.MAX_SAFE_INTEGER;
-  let answer2: number = Number.MAX_SAFE_INTEGER;
-
-  // Part 1
-  for (const seedString of seedsStrings) {
-    const seed: Seed = new Seed(parseInt(seedString));
-    seed.process(maps);
-    if (seed.location < answer1) answer1 = seed.location;
-  }
-
-  // Part 2
-  maps.forEach((map) =>
-    map.entries.sort((a, b) => a.source.start - b.source.start)
-  );
-
-  const ranges: Range[] = [];
-  for (let i = 0; i < seedsStrings.length; i += 2) {
-    ranges.push({
-      start: parseInt(seedsStrings[i]),
-      end: parseInt(seedsStrings[i]) + parseInt(seedsStrings[i + 1]) - 1,
-    });
-  }
-
-  for (const range of ranges) {
-    const lowestLocation = processRange(0, range);
-    if (lowestLocation < answer2) answer2 = lowestLocation;
-  }
-
-  // Finish
-  console.log("Answer 1: " + answer1);
-  console.log("Answer 2: " + answer2);
-});
-
-function processRange(mapIndex: number, range: Range): number {
+function processRange(mapIndex: number, range: Range, maps: Map[]): number {
   if (mapIndex >= maps.length) return range.start;
 
   const map = maps[mapIndex];
@@ -143,7 +65,7 @@ function processRange(mapIndex: number, range: Range): number {
 
   let lowest: number = Number.MAX_SAFE_INTEGER;
   for (const range of subRanges) {
-    const rangeLowest = processRange(mapIndex, range);
+    const rangeLowest = processRange(mapIndex, range, maps);
     if (rangeLowest < lowest) lowest = rangeLowest;
   }
   return lowest;
@@ -199,3 +121,74 @@ function mapRanges(ranges: Range[], map: Map): void {
     }
   });
 }
+
+function processInput(input: string[]): Map[] {
+  const maps: Map[] = [];
+  let currentMap: Map = null;
+
+  input.forEach((line) => {
+    if (line === "") return;
+
+    if (line.split(" ")[1] === "map:") {
+      const categories = line.split(" ")[0];
+      const source = categories.split("-")[0];
+      const destination = categories.split("-")[2];
+
+      maps.push({ source, destination, entries: [] });
+      currentMap = maps[maps.length - 1];
+
+      return;
+    }
+
+    const split = line.split(" ");
+    const length = parseInt(split[2]);
+    const sourceStart = parseInt(split[1]);
+    const sourceEnd = sourceStart + length - 1;
+    const destinationStart = parseInt(split[0]);
+
+    currentMap.entries.push({
+      destinationStart,
+      source: { start: sourceStart, end: sourceEnd },
+    });
+  });
+
+  return maps;
+}
+
+function main(input: string[]) {
+  let answer1: number = Number.MAX_SAFE_INTEGER;
+  let answer2: number = Number.MAX_SAFE_INTEGER;
+
+  const seedsStrings: string[] = input.shift().split(": ")[1].split(" ");
+  const maps: Map[] = processInput(input);
+
+  // Part 1
+  for (const seedString of seedsStrings) {
+    const seed: Seed = new Seed(parseInt(seedString));
+    seed.process(maps);
+    if (seed.location < answer1) answer1 = seed.location;
+  }
+
+  // Part 2
+  maps.forEach((map) =>
+    map.entries.sort((a, b) => a.source.start - b.source.start)
+  );
+
+  const ranges: Range[] = [];
+  for (let i = 0; i < seedsStrings.length; i += 2) {
+    ranges.push({
+      start: parseInt(seedsStrings[i]),
+      end: parseInt(seedsStrings[i]) + parseInt(seedsStrings[i + 1]) - 1,
+    });
+  }
+
+  for (const range of ranges) {
+    const lowestLocation = processRange(0, range, maps);
+    if (lowestLocation < answer2) answer2 = lowestLocation;
+  }
+
+  // Finish
+  return { part1: answer1, part2: answer2 };
+}
+
+export default main;

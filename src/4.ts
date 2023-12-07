@@ -1,51 +1,17 @@
-import fs from "fs";
-import readline from "readline";
-
-const fileStream = fs.createReadStream("src/inputs/day4.txt");
-const rl = readline.createInterface({
-  input: fileStream,
-  crlfDelay: Infinity,
-});
-
 type Card = {
   cardNumber: number;
   matches: number;
   value: number;
 };
 
-const cards: Card[] = [];
-
-rl.on("line", (line: string) => {
-  const card: Card = parseCard(line);
-  cards.push(card);
-});
-
-rl.on("close", () => {
-  // Part 1
-  let answer1: number = 0;
-  for (const card of cards) answer1 += card.value;
-
-  // Part 2
-  const cardCopies: Card[] = [...cards];
-  let answer2: number = cardCopies.length;
-
-  while (cardCopies.length > 0) {
-    const card = cardCopies.pop();
-    answer2 = checkCardForCopies(card, cardCopies, answer2);
-  }
-
-  // Finish
-  console.log("Answer 1: " + answer1);
-  console.log("Answer 2: " + answer2);
-});
-
 function checkCardForCopies(
   card: Card,
+  originalCards: Card[],
   cardCopies: Card[],
   result: number
 ): number {
   for (let i = 0; i < card.matches; i++) {
-    cardCopies.push(cards[card.cardNumber + i]);
+    cardCopies.push(originalCards[card.cardNumber + i]);
     result++;
   }
 
@@ -91,3 +57,28 @@ function parseCard(line: string): Card {
   }
   return card;
 }
+
+function main(input: string[]) {
+  const cards: Card[] = [];
+  input.forEach((line) => {
+    cards.push(parseCard(line));
+  });
+
+  // Part 1
+  let answer1: number = 0;
+  for (const card of cards) answer1 += card.value;
+
+  // Part 2
+  const cardCopies: Card[] = [...cards];
+  let answer2: number = cardCopies.length;
+
+  while (cardCopies.length > 0) {
+    const card = cardCopies.pop();
+    answer2 = checkCardForCopies(card, cards, cardCopies, answer2);
+  }
+
+  // Finish
+  return { part1: answer1, part2: answer2 };
+}
+
+export default main;

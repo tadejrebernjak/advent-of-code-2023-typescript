@@ -1,28 +1,3 @@
-import fs from "fs";
-import readline from "readline";
-
-const fileStream = fs.createReadStream("src/inputs/day7.txt");
-const rl = readline.createInterface({
-  input: fileStream,
-  crlfDelay: Infinity,
-});
-
-const cardPowers: Map<string, number> = new Map([
-  ["2", 2],
-  ["3", 3],
-  ["4", 4],
-  ["5", 5],
-  ["6", 6],
-  ["7", 7],
-  ["8", 8],
-  ["9", 9],
-  ["T", 10],
-  ["J", 11],
-  ["Q", 12],
-  ["K", 13],
-  ["A", 14],
-]);
-
 type HandType = {
   type: string;
   power: number;
@@ -40,7 +15,21 @@ type CardEntry = {
   count: number;
 };
 
-const hands: Hand[] = [];
+const cardPowers: Map<string, number> = new Map([
+  ["2", 2],
+  ["3", 3],
+  ["4", 4],
+  ["5", 5],
+  ["6", 6],
+  ["7", 7],
+  ["8", 8],
+  ["9", 9],
+  ["T", 10],
+  ["J", 11],
+  ["Q", 12],
+  ["K", 13],
+  ["A", 14],
+]);
 
 function getCardEntries(cards: string, ruleset: 1 | 2): CardEntry[] {
   const entries: CardEntry[] = [];
@@ -132,21 +121,29 @@ function getWinnings(hands: Hand[]): number {
   return result;
 }
 
-rl.on("line", (line: string) => {
-  const split = line.trim().split(" ");
-  const hand = {
-    cards: split[0],
-    bid: parseInt(split[1]),
-    type: null,
-    cardsPower: null,
-  };
+function processInput(input: string[]): Hand[] {
+  const hands: Hand[] = [];
 
-  hands.push(hand);
-});
+  input.forEach((line) => {
+    const split = line.trim().split(" ");
+    const hand = {
+      cards: split[0],
+      bid: parseInt(split[1]),
+      type: null,
+      cardsPower: null,
+    };
 
-rl.on("close", () => {
+    hands.push(hand);
+  });
+
+  return hands;
+}
+
+function main(input: string[]) {
   let answer1: number = 0;
   let answer2: number = 0;
+
+  const hands: Hand[] = processInput(input);
 
   // Part 1
   processHands(hands, 1);
@@ -158,6 +155,7 @@ rl.on("close", () => {
   answer2 = getWinnings(hands);
 
   // Finish
-  console.log("Answer 1:", answer1);
-  console.log("Answer 2:", answer2);
-});
+  return { part1: answer1, part2: answer2 };
+}
+
+export default main;

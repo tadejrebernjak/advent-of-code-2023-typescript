@@ -6,13 +6,7 @@
   "type": "module",
   "scripts": {
     "build": "tsc",
-    "day1": "node dist/day1.js",
-    "day2": "node dist/day2.js",
-    "day3": "node dist/day3.js",
-    "day4": "node dist/day4.js",
-    "day5": "node dist/day5.js",
-    "day6": "node dist/day6.js",
-    "day7": "node dist/day7.js"
+    "all": "node index.js all"
   },
   "author": "Tadej",
   "license": "ISC",
