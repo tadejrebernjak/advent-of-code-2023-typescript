@@ -1,7 +1,7 @@
 import fs from "fs";
 import readline from "readline";
 
-const latestDay = 7;
+const latestDay = 8;
 
 const args = process.argv.slice(2);
 
@@ -15,7 +15,7 @@ if (args.length === 1 && args[0] === "all") {
 ) {
   runDay(args[0]);
 } else {
-  console.log("Please pass only ONE argument: [1-7] OR 'all'");
+  console.log(`Please pass only ONE argument: [1-${latestDay}] OR 'all'`);
 }
 
 async function runDay(day) {
