@@ -1,7 +1,7 @@
 import fs from "fs";
 import readline from "readline";
 
-const latestDay = 8;
+const latestDay = 9;
 
 const args = process.argv.slice(2);
 
