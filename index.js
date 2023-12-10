@@ -1,9 +1,12 @@
 import fs from "fs";
 import readline from "readline";
 
-const latestDay = 9;
-
 const args = process.argv.slice(2);
+
+let latestDay = 0;
+fs.readdirSync("src").forEach((file) => {
+  if (file.includes(".ts")) latestDay++;
+});
 
 if (args.length === 1 && args[0] === "all") {
   for (let i = 1; i <= latestDay; i++) await runDay(i);
