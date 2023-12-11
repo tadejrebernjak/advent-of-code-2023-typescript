@@ -3,156 +3,110 @@ type Coordinates = {
   x: number;
 };
 
-type Galaxy = {
-  id: number;
-  coords: Coordinates;
-};
-
-type Pair = {
-  galaxies: Galaxy[];
-  path: Coordinates[];
-};
-
-function processInput(input: string[]): string[][] {
+function processInput(input: string[], empty: Coordinates[]): string[][] {
   let map: string[][] = [];
 
-  input.forEach((line) => {
+  input.forEach((line, y) => {
     const row: string[] = line.split("");
-    if (row.includes("#")) {
-      map.push([...row]);
-    } else {
-      map.push([...row]);
-      map.push([...row]);
+    map.push(row);
+
+    // Check if row is empty
+    if (!row.includes("#")) {
+      empty.push({ y, x: null });
     }
   });
 
+  // Check if column is empty
   for (let x = 0; x < map[0].length; x++) {
     let column: string[] = [];
     for (let y = 0; y < map.length; y++) {
       column.push(map[y][x]);
     }
     if (!column.includes("#")) {
-      map.forEach((row, index, map) => {
-        map[index] = [...row.slice(0, x), ".", ...row.slice(x)];
-      });
-      x++;
+      empty.push({ y: null, x });
     }
   }
 
   return map;
 }
 
-function mapGalaxies(map: string[][]): Galaxy[] {
-  const galaxies: Galaxy[] = [];
-  let id: number = 1;
+function mapGalaxies(map: string[][]): Coordinates[] {
+  const galaxies: Coordinates[] = [];
 
   for (let i = 0; i < map.length; i++) {
     for (let j = 0; j < map[i].length; j++) {
       if (map[i][j] === "#") {
-        galaxies.push({ id, coords: { y: i, x: j } });
-        id++;
+        galaxies.push({ y: i, x: j });
       }
     }
   }
-
   return galaxies;
 }
 
-/*function makePairs(galaxies: Galaxy[]): Pair[] {
-  const pairs: Pair[] = [];
-
+function getPairs(galaxies: Coordinates[]): Coordinates[][] {
+  const pairs: Coordinates[][] = [];
   for (let i = 0; i < galaxies.length; i++) {
-    for (let j = 0; j < galaxies.length; j++) {
-      console.log(i, j);
-      if (j === i) continue;
-      if (
-        pairs.find(
-          (pair) =>
-            pair.galaxies.includes(galaxies[i]) &&
-            pair.galaxies.includes(galaxies[j])
-        ) === undefined
-      ) {
-        pairs.push({ galaxies: [galaxies[i], galaxies[j]], path: [] });
-      }
+    for (let j = 0; j < i; j++) {
+      pairs.push([galaxies[i], galaxies[j]]);
     }
   }
-
   return pairs;
-}*/
+}
 
-function getPairsMerge(
-  galaxies: Galaxy[],
-  pairs: Pair[],
-  left: number,
-  right: number,
-  mid: number
+function isBetween(
+  first: Coordinates,
+  second: Coordinates,
+  expansion: Coordinates
 ) {
-  const buffer: Pair[] = new Array(left + right + 1).fill(null);
-  let i = left,
-    k = left,
-    j = mid + 1;
-
-  while (i <= mid && j <= right) {}
+  return expansion.x === null
+    ? (first.y < expansion.y && expansion.y < second.y) ||
+        (second.y < expansion.y && expansion.y < first.y)
+    : (first.x < expansion.x && expansion.x < second.x) ||
+        (second.x < expansion.x && expansion.x < first.x);
 }
 
-function makePairs(
-  galaxies: Galaxy[],
-  pairs: Pair[],
-  left: number,
-  right: number
-): void {
-  if (left < right) {
-    let mid: number = Math.floor((left + right) / 2);
-    makePairs(galaxies, pairs, left, mid);
-    makePairs(galaxies, pairs, mid + 1, right);
-    getPairsMerge(galaxies, pairs, left, right, mid);
-  }
-}
+function solve(
+  pairs: Coordinates[][],
+  empty: Coordinates[],
+  expansionRate: number
+): number {
+  let result: number = 0;
 
-function determineDistances(pairs: Pair[]): void {
+  console.log(pairs.length);
+
   pairs.forEach((pair) => {
-    const start: Galaxy = pair.galaxies[0];
-    const goal: Galaxy = pair.galaxies[1];
-    const current: Coordinates = Object.assign({}, start.coords);
+    const expansions: number = empty.filter((expansion) =>
+      isBetween(pair[0], pair[1], expansion)
+    ).length;
 
-    while (current.y != goal.coords.y || current.x != goal.coords.x) {
-      if (current.y != goal.coords.y) {
-        current.y < goal.coords.y ? current.y++ : current.y--;
-      } else {
-        current.x < goal.coords.x ? current.x++ : current.x--;
-      }
-
-      pair.path.push({ y: current.y, x: current.x });
-    }
+    result +=
+      Math.abs(pair[0].y - pair[1].y) +
+      Math.abs(pair[0].x - pair[1].x) -
+      expansions +
+      expansions * expansionRate;
   });
+
+  return result;
 }
 
 function main(input: string[]) {
   let answer1: number = 0;
   let answer2: number = 0;
 
-  const map: string[][] = processInput(input);
-  const galaxies: Galaxy[] = mapGalaxies(map);
+  const empty: Coordinates[] = [];
+  const map: string[][] = processInput(input, empty);
+  const galaxies: Coordinates[] = mapGalaxies(map);
+
+  const pairs: Coordinates[][] = getPairs(galaxies);
 
   // Part 1
-  //const pairs: Pair[] = makePairs(galaxies);
-  //determineDistances(pairs);
-
-  //pairs.forEach((pair) => (answer1 += pair.path.length));
+  answer1 = solve(pairs, empty, 2);
 
   // Part 2
+  answer2 = solve(pairs, empty, 1000000);
 
   // Finish
-
   return { part1: answer1, part2: answer2 };
 }
 
 export default main;
-
-function printMap(map: string[][]): void {
-  map.forEach((row) => {
-    let line: string = "";
-    row.forEach((char) => (line += char));
-    console.log(line);
-  });
-}
