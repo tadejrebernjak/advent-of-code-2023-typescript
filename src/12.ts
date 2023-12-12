@@ -1,19 +1,20 @@
-type Row = {
+type Node = {
   config: string;
   nums: number[];
 };
 
-/*
 function solve(input: string[]): number {
   let result: number = 0;
 
   input.forEach((row) => {
+    let rowPossibilites = 1;
+
     let nums: number[] = [];
     row
       .split(" ")[1]
       .split(",")
       .forEach((numString) => nums.push(parseInt(numString)));
-    let springs: string[] = row
+    let config: string[] = row
       .split(" ")[0]
       .replaceAll(/\.+/g, ".")
       .split(".")
@@ -21,13 +22,12 @@ function solve(input: string[]): number {
 
     const nodes: Node[] = [];
 
-    for (let i = 0; i < springs.length; i++) {
-      const node = {
-        springs: springs[i].split(""),
+    for (let i = 0; i < config.length; i++) {
+      const node: Node = {
+        config: config[i],
         nums: [],
-        possibilities: 0,
       };
-      let length = springs[i].length;
+      let length = config[i].length;
 
       while (length > 0) {
         if (nums[0] === undefined || nums[0] > length) break;
@@ -38,61 +38,98 @@ function solve(input: string[]): number {
       nodes.push(node);
     }
 
-    console.log(row);
-    console.log(nodes);
-
+    //console.log(row);
     nodes.forEach((node) => {
-      let length = 0;
-      let num = 0;
-      for (let i = 0; i < node.springs.length; i++) {
-        length++;
-        if (i+1 < node.springs.length && node.springs[i+1] === "#") {
-            if (length > node.nums[num]) {
-                node.springs[i] = ".";
-            } else {
-                let j = i + 1;
+      let possibilities = 1;
+      //console.log("NODE----------");
+      //console.log(node);
+      const isolated: Node[] = [];
+      let config: string = node.config;
+      let nums: number[] = [...node.nums];
+
+      while (config != "") {
+        let nextNum: number = nums[0];
+        for (let i = 0; i < config.length; i++) {
+          if (i === config.length - 1) {
+            isolated.push({
+              config,
+              nums,
+            });
+            config = "";
+            break;
+          }
+          if (config[i] === "#") {
+            if (i === 0) {
+              if (i + 1 < nextNum) {
+                config = config.slice(1);
+                nums[0]--;
+                break;
+              } else {
+                config = config.slice(2);
+                nums.shift();
+                break;
+              }
             }
+            let j = i;
+            while (config[j + 1] === "#" && j + 1 < config.length) {
+              j++;
+            }
+            if (j + 1 >= nextNum) {
+              config = config.slice(j + 2);
+              nums.shift();
+              break;
+            } else {
+              isolated.push({
+                config: config.slice(0, i),
+                nums: [i],
+              });
+              config = config.slice(j + 1);
+              nums[0] -= j + 1;
+              break;
+            }
+          }
         }
       }
-    });*/
 
-/*
-    
-    for (let i = 0; i < springs.length; i++) {
-        for (let j = 0; j < springs[i].length; j++) {
-            const spring = springs[j];
-            const num = nums[k];
-            if (spring.length === num) {
-                possibilities++;
-                k++;
-            } else if (spring.length === num + 1) {
-
-            }
+      //console.log("ISOLATED----------");
+      isolated.forEach((node) => {
+        let combinations = 0;
+        //console.log(node);
+        if (nums.length === 0) {
+          return;
         }
-    }
-    
+        if (nums.length > 1) {
+          let sum = 0;
+          node.nums.forEach((num) => (sum += num));
+          let i = node.config.length - sum;
+          for (i; i > 0; i--) {
+            combinations += i;
+          }
+        } else {
+          combinations = 1;
+          for (let i = 0; i + nums[0] < node.config.length; i++) {
+            combinations++;
+          }
+        }
+
+        possibilities *= combinations <= 0 ? 1 : combinations;
+        console.log(node, combinations);
+      });
+      //console.log(possibilities);
+      rowPossibilites *= possibilities;
+    });
+    result += rowPossibilites;
   });
 
-  return 0;
-}*/
+  return result;
+}
 
 function main(input: string[]) {
   let answer1: number = 0;
   let answer2: number = 0;
 
-  const rows: Row[] = [];
-  input.forEach((line) => {
-    const split = line.split(" ");
-    const row: Row = { config: split[0], nums: [] };
-    split[1].split(",").forEach((numStr) => row.nums.push(parseInt(numStr)));
-
-    rows.push(row);
-  });
-
-  console.log(rows);
-
   // Part 1
-  //answer1 = solve(input);
+  answer1 = solve(input);
 
   // Part 2
 
